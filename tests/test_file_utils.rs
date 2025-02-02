@@ -18,6 +18,6 @@ fn test_extract_word() {
 fn test_choose_word() {
     let words = vec![String::from("apple")
                      , String::from("banana"), String::from("cherry")];
-    let word = choose_word(words.clone());
+    let word = choose_word(&words);
     assert!(words.contains(&word));
 }

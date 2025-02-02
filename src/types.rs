@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::ops::Index;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Color {
@@ -25,9 +26,21 @@ impl ColoredLetter {
     }
 }
 
+impl Eq for ColoredLetter {}
 impl PartialEq for ColoredLetter {
     fn eq(&self, other: &ColoredLetter) -> bool {
         self.letter == other.letter && self.color == other.color
+    }
+}
+
+impl Ord for ColoredLetter {
+    fn cmp(&self, other: &ColoredLetter) -> Ordering {
+        self.letter.cmp(&other.letter)
+    }
+}
+impl PartialOrd for ColoredLetter {
+    fn partial_cmp(&self, other: &ColoredLetter) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 #[derive (Debug, Clone)]
@@ -47,7 +60,9 @@ impl ColoredLetters {
     pub fn letters(&self) -> Vec<ColoredLetter> {
         self.colored_letters.clone()
     }
-
+    pub fn letters_with_color_count(&self, color: Color) -> usize {
+        self.colored_letters.iter().filter(|c| c.color() == color).count()
+    }
     pub fn add(&mut self, colored_letter: ColoredLetter) {
         self.colored_letters.push(colored_letter);
     }
@@ -73,42 +88,52 @@ impl PartialEq for ColoredLetters {
     }
 }
 
+impl Index<usize> for ColoredLetters {
+    type Output = ColoredLetter;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.colored_letters[index]
+    }
+}
+
 #[derive (Debug, Clone)]
 pub struct Rule {
     position: usize,
-    letter: char,
-    color: Color,
+    colored_letter: ColoredLetter,
 }
 impl Rule {
     pub fn new(position: usize, letter: char, color: Color) -> Rule {
-        Self { position, letter, color }
+        let colored_letter = ColoredLetter::new(letter, color);
+        Self::new_with_colored_letter(position, colored_letter)
+    }
+    pub fn new_with_colored_letter(position: usize, colored_letter: ColoredLetter) -> Rule {
+        Self { position, colored_letter }
     }
     pub fn position(&self) -> usize {
         self.position
     }
     pub fn letter(&self) -> char {
-        self.letter
+        self.colored_letter.letter
     }
     pub fn color(&self) -> Color {
-        self.color.clone()
+        self.colored_letter.color.clone()
     }
 }
 
 impl Eq for Rule {}
 impl PartialEq for Rule {
    fn eq(&self, other: &Rule) -> bool {
-       self.position == other.position && self.letter == other.letter && self.color == other.color
+       self.position == other.position && self.colored_letter == other.colored_letter
    }
 }
 
 impl Ord for Rule {
     fn cmp(&self, other: &Rule) -> Ordering {
-        self.letter.cmp(&other.letter).then(self.color.cmp(&other.color))
+        self.colored_letter.cmp(&other.colored_letter).then(self.position.cmp(&other.position))
     }
 }
 impl PartialOrd for Rule {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.letter.cmp(&other.letter).then(self.color.cmp(&other.color)))
+        Some(self.colored_letter.cmp(&other.colored_letter).then(self.position.cmp(&other.position)))
     }
 }
 
@@ -123,12 +148,19 @@ impl Rules {
     pub fn size(&self) -> usize {
         self.rules.len()
     }
+    pub fn empty(&self) -> bool {
+        self.size() == 0
+    }
+    pub fn contains(&self, pos: usize, colored_letter: ColoredLetter) -> bool {
+        let rule = Rule::new_with_colored_letter(pos, colored_letter);
+        self.rules.contains(&rule)
+    }
     pub fn add(&mut self, rule: Rule) {
-        if rule.color == Color::Gray
-            && self.letter_occurrences_with_color(rule.letter, Color::Gray) > 0 {
+        if rule.colored_letter.color == Color::Gray
+            && self.letter_occurrences_with_color(rule.colored_letter.letter, Color::Gray) > 0 {
             return;
         }
-        else if rule.color == Color::Green
+        else if rule.colored_letter.color() == Color::Green
             && self.rules.contains(&rule) {
             return;
         }
@@ -140,14 +172,15 @@ impl Rules {
     }
 
     pub fn letter_occurrences_with_color(&self, letter: char, color: Color) -> usize {
-        let mut count = 0;
-        for rule in &self.rules {
-            if rule.letter == letter
-                && rule.color == color {
-                count += 1;
-            }
-        }
-        count
+        self.rules.iter().filter(|c| c.letter() == letter && c.color() == color).count()
+    }
+
+    pub fn letter_occurrences(&self, letter: char) -> usize {
+        self.rules.iter().filter(|c| c.letter() == letter).count()
+    }
+
+    pub fn color_occurrences(&self, color: Color) -> usize {
+        self.rules.iter().filter(|c| c.color() == color).count()
     }
 }
 
@@ -160,5 +193,20 @@ impl PartialEq for Rules {
         sorted_other.sort();
 
         sorted_rules.eq(&sorted_other)
+    }
+}
+
+impl Index<usize> for Rules {
+    type Output = Rule;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.rules[index]
+    }
+}
+impl IntoIterator for Rules {
+    type Item = Rule;
+    type IntoIter = std::vec::IntoIter<Rule>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.rules.into_iter()
     }
 }

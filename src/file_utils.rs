@@ -9,7 +9,7 @@ pub fn extract_words(file_name: String) -> Vec<String> {
     words.lines().map(|x| x.to_string()).collect()
 }
 
-pub fn choose_word(words:Vec<String>) -> String {
+pub fn choose_word(words:&Vec<String>) -> String {
     let mut rng= rand::rng();
     let number = rng.random_range(1..words.len());
     words[number].clone()
