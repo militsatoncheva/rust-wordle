@@ -1,13 +1,13 @@
 use std::io;
 use std::io::Write;
 
-use wordle::game::{normal_game, hard_mode};
+use wordle::game::{normal_game, hard_mode, guess_mode};
 
 fn start_game(mode: &str) {
     match mode {
         "n" => normal_game(),
         "h" => hard_mode(),
-        "g" => println!("Guess mode"),
+        "g" => guess_mode(),
         _ => println!("Invalid mode"),
     }
 }

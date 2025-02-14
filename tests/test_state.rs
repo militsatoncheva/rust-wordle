@@ -185,3 +185,184 @@ fn test_check_guess_rules_2_consecutive2() {
 
     assert_eq!(state.rules(), expected);
 }
+
+#[test]
+fn test_lie_with_gray_found_in_rules() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("heart");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("guess");
+    state.check_guess(guess2);
+    let mut indexes = vec![2];
+    let result = state.lie_with_gray_letter(&mut indexes, 2, &rules);
+    let expected = (false, state.colored_letters());
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_gray_to_green() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("heart");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("grass");
+    state.check_guess(guess2);
+    let mut indexes = vec![2];
+    let result = state.lie_with_gray_letter(&mut indexes, 2, &rules);
+    let mut false_letters = ColoredLetters::new();
+    false_letters.add(ColoredLetter::new('g', Color::Gray));
+    false_letters.add(ColoredLetter::new('r', Color::Gray));
+    false_letters.add(ColoredLetter::new('a', Color::Green));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    let expected = (true, false_letters);
+    assert_eq!(result, expected);
+}
+#[test]
+fn test_lie_with_gray_to_yellow() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("heart");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("guess");
+    state.check_guess(guess2);
+    let mut indexes = vec![3];
+    let result = state.lie_with_gray_letter(&mut indexes, 3, &rules);
+    let mut false_letters = ColoredLetters::new();
+    false_letters.add(ColoredLetter::new('g', Color::Gray));
+    false_letters.add(ColoredLetter::new('u', Color::Yellow));
+    false_letters.add(ColoredLetter::new('e', Color::Gray));
+    false_letters.add(ColoredLetter::new('s', Color::Yellow));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    let expected = (true, false_letters);
+    assert_eq!(result, expected);
+}
+#[test]
+fn test_lie_with_gray_all_letters_known() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("tuoba");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("guess");
+    state.check_guess(guess2);
+    let mut indexes = vec![2];
+    let result = state.lie_with_gray_letter(&mut indexes, 2, &rules);
+    let expected = (false, state.colored_letters());
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_yellow_to_gray() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("honey");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("guess");
+    state.check_guess(guess2);
+    let mut indexes = vec![1];
+    let result = state.lie_with_yellow_letter(&mut indexes, 1, &rules);
+    let mut false_letters = ColoredLetters::new();
+    false_letters.add(ColoredLetter::new('g', Color::Gray));
+    false_letters.add(ColoredLetter::new('u', Color::Gray));
+    false_letters.add(ColoredLetter::new('e', Color::Gray));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    let expected = (true, false_letters);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_yellow_green_in_same_pos() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("xbuxx");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("guess");
+    state.check_guess(guess2);
+    let mut indexes = vec![1];
+    let result = state.lie_with_yellow_letter(&mut indexes, 1, &rules);
+    let expected = (false, state.colored_letters());
+    assert_eq!(result, expected);
+}
+#[test]
+fn test_lie_with_yellow_not_enough_grays_and_yellows_left() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("xxuxx");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("auobt");
+    state.check_guess(guess2);
+    let mut indexes = vec![1];
+    let result = state.lie_with_yellow_letter(&mut indexes, 1, &rules);
+    let expected = (false, state.colored_letters());
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_yellow_to_green() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("xxuxx");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("guess");
+    state.check_guess(guess2);
+    let mut indexes = vec![1];
+    let result = state.lie_with_yellow_letter(&mut indexes, 1, &rules);
+    let mut false_letters = ColoredLetters::new();
+    false_letters.add(ColoredLetter::new('g', Color::Gray));
+    false_letters.add(ColoredLetter::new('u', Color::Green));
+    false_letters.add(ColoredLetter::new('e', Color::Gray));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    false_letters.add(ColoredLetter::new('s', Color::Gray));
+    let expected = (true, false_letters);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_green_in_rules_as_green() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("abort");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("alive");
+    state.check_guess(guess2);
+    let mut indexes = vec![0];
+    let result = state.lie_with_green_letter(&mut indexes, 0, &rules);
+    let expected = (false, state.colored_letters());
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_green_in_rules_as_yellow() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("movie");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("phone");
+    state.check_guess(guess2);
+    let mut indexes = vec![2];
+    let result = state.lie_with_green_letter(&mut indexes, 2, &rules);
+    let expected = (false, state.colored_letters());
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_lie_with_green_to_gray() {
+    let mut state = State::new(String::from("about"));
+    let guess = String::from("xxxxx");
+    state.check_guess(guess);
+    let rules = state.rules().clone();
+    let guess2 = String::from("abort");
+    state.check_guess(guess2);
+    let mut indexes = vec![1];
+    let result = state.lie_with_green_letter(&mut indexes, 1, &rules);
+    let mut false_letters = ColoredLetters::new();
+    false_letters.add(ColoredLetter::new('a', Color::Green));
+    false_letters.add(ColoredLetter::new('b', Color::Gray));
+    false_letters.add(ColoredLetter::new('o', Color::Green));
+    false_letters.add(ColoredLetter::new('r', Color::Gray));
+    false_letters.add(ColoredLetter::new('t', Color::Green));
+    let expected = (true, false_letters);
+    assert_eq!(result, expected);
+}

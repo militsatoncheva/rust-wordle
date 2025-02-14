@@ -13,6 +13,13 @@ impl State {
         let rules = Rules::new();
         Self {secret_word, colored_letters, rules}
     }
+    pub fn new_with_rules(secret_word: String, rules: Rules) -> State {
+        let colored_letters = ColoredLetters::new();
+        Self {secret_word, colored_letters, rules}
+    }
+    pub fn secret_word(&self) -> &String{
+        &self.secret_word
+    }
     pub fn colored_letters(&self) -> ColoredLetters {
         self.colored_letters.clone()
     }
@@ -82,71 +89,74 @@ impl State {
 }
 
 impl State {
-    fn lie_with_green_letter(&mut self, valid_indexes: &mut Vec<usize>, element_ind: usize) -> (bool, ColoredLetters){
+    pub fn lie_with_green_letter(&mut self, valid_indexes: &mut Vec<usize>, element_ind: usize, rules: &Rules) -> (bool, ColoredLetters){
         let colored_letter: ColoredLetter = self.colored_letters[element_ind].clone();
-        if self.rules.contains(element_ind, colored_letter.clone())
-        || self.rules.letter_occurrences_with_color(colored_letter.letter(), Color::Yellow) > 0  {
+        if rules.contains(element_ind, colored_letter.clone())
+        || rules.letter_occurrences_with_color(colored_letter.letter(), Color::Yellow) > 0  {
             let mut new_indexes = valid_indexes.iter().filter(|c| **c != element_ind).copied().collect();
-            self.lie(&mut new_indexes);
+            return self.lie(&mut new_indexes, rules);
         }
         let mut false_letters = self.colored_letters.clone();
         false_letters.replace_color(element_ind, Color::Gray);
         (true, false_letters)
     }
 
-    fn lie_with_yellow_letter(&mut self, valid_indexes: &mut Vec<usize>, element_ind: usize) -> (bool, ColoredLetters){
+    pub fn lie_with_yellow_letter(&mut self, valid_indexes: &mut Vec<usize>, element_ind: usize, rules: &Rules) -> (bool, ColoredLetters){
         let colored_letter: ColoredLetter = self.colored_letters[element_ind].clone();
         let mut false_letters = self.colored_letters.clone();
-        if self.rules.letter_occurrences(colored_letter.letter()) == 0 {
+        if rules.letter_occurrences(colored_letter.letter()) == 0 {
             false_letters.replace_color(element_ind, Color::Gray);
             return (true, false_letters)
         }
-        else if self.rules
+        else if rules
             .clone()
             .into_iter()
             .filter(|c| c.position() == element_ind && c.color() == Color::Green).count() > 0
             || (self.colored_letters.letters_with_color_count(Color::Gray) == 0
                 && self.colored_letters.letters_with_color_count(Color::Yellow) < 3){
             let mut new_indexes = valid_indexes.iter().filter(|c| **c != element_ind).copied().collect();
-            self.lie(&mut new_indexes);
+            return self.lie(&mut new_indexes, rules);
         }
-        false_letters.replace_color(element_ind, Color::Gray);
+        false_letters.replace_color(element_ind, Color::Green);
         (true, false_letters)
     }
 
-    fn lie_with_gray_letter(&mut self, valid_indexes: &mut Vec<usize>, element_ind: usize) -> (bool, ColoredLetters){
+    pub fn lie_with_gray_letter(&mut self, valid_indexes: &mut Vec<usize>, element_ind: usize, rules: &Rules) -> (bool, ColoredLetters){
         let colored_letter: ColoredLetter = self.colored_letters[element_ind].clone();
         let mut false_letters = self.colored_letters.clone();
 
-        if self.rules.color_occurrences(Color::Yellow) == self.secret_word.len()
+        if rules.color_occurrences(Color::Yellow) == self.secret_word.len()
             || (self.colored_letters.letters_with_color_count(Color::Gray) == 1
                 && self.colored_letters.letters_with_color_count(Color::Yellow) < 2){
             let mut new_indexes = valid_indexes.iter().filter(|c| **c != element_ind).copied().collect();
-            self.lie(&mut new_indexes);
+            return self.lie(&mut new_indexes, rules);
         }
-        else if self.rules.letter_occurrences(colored_letter.letter()) == 0 {
+        else if rules.letter_occurrences(colored_letter.letter()) == 0 {
             false_letters.replace_color(element_ind, Color::Yellow);
             return (true, false_letters)
         }
-        else if self.rules.letter_occurrences_with_color(colored_letter.letter(), Color::Gray) > 0
-        || self.rules
+        else if rules.letter_occurrences_with_color(colored_letter.letter(), Color::Gray) > 0
+        || rules
             .clone()
             .into_iter().
             filter(|c| c.position() == element_ind && c.color() == Color::Green).count() > 0{
             let mut new_indexes = valid_indexes.iter().filter(|c| **c != element_ind).copied().collect();
-            self.lie(&mut new_indexes);
+            return self.lie(&mut new_indexes, rules);
         }
 
         false_letters.replace_color(element_ind, Color::Green);
         (true, false_letters)
     }
-    pub fn lie(&mut self, valid_indexes: &mut Vec<usize>) -> (bool, ColoredLetters) {
+    pub fn lie(&mut self, valid_indexes: &mut Vec<usize>, rules_before_guess: &Rules) -> (bool, ColoredLetters) {
+        if valid_indexes.is_empty() {
+            return (false, self.colored_letters.clone());
+        }
         let mut rng= rand::rng();
         let ind = rng.random_range(0..valid_indexes.len());
         match self.colored_letters.letters()[ind].color() {
-            Color::Green => self.lie_with_green_letter(valid_indexes, ind),
-            Color::Yellow => self.lie_with_yellow_letter(valid_indexes, ind),
-            Color::Gray => self.lie_with_gray_letter(valid_indexes, ind),
+            Color::Green => self.lie_with_green_letter(valid_indexes, ind, &rules_before_guess),
+            Color::Yellow => self.lie_with_yellow_letter(valid_indexes, ind, &rules_before_guess),
+            Color::Gray => self.lie_with_gray_letter(valid_indexes, ind, &rules_before_guess),
             _ => panic!("unknown color"),
         }
     }
